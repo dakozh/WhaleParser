@@ -11,52 +11,26 @@ permissions:
 jobs:
   run:
     runs-on: ubuntu-latest
+    container: mcr.microsoft.com/playwright:v1.47.0-jammy   # браузеры уже установлены
     steps:
-      - name: Checkout (force main, clean)
-        uses: actions/checkout@v4
-        with:
-          ref: main
-          fetch-depth: 0
-          clean: true
-
-      - name: Debug repo state
-        run: |
-          echo "PWD=$(pwd)"
-          echo "=== git HEAD ==="
-          git rev-parse HEAD
-          echo "=== last commit ==="
-          git --no-pager log -1 --oneline
-          echo "=== tree ==="
-          ls -la
-          echo "=== requirements.txt content ==="
-          cat requirements.txt || true
-          echo "=== bot.yml path ==="
-          cat .github/workflows/bot.yml || true
+      - uses: actions/checkout@v4
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      # страхуемся: если вдруг Actions выкачал старый коммит —
-      # принудительно перезапишем requirements.txt перед установкой
-      - name: Ensure correct requirements
-        run: |
-          printf "requests==2.32.4\nbeautifulsoup4==4.12.3\nlxml==5.3.0\n" > requirements.txt
-          echo "Final requirements.txt:"
-          cat requirements.txt
-
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install playwright==1.47.0 requests==2.32.4 beautifulsoup4==4.12.3 lxml==5.3.0
 
       - name: Run scraper
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}   # у тебя: -1003233502205
           TARGET_URL:         ${{ secrets.TARGET_URL }}
-        run: python scraper.py
+        run: python scraper_playwright.py
 
       - name: Commit seen.json if changed
         run: |
