@@ -1,8 +1,9 @@
 name: hypurr-bot
+
 on:
-  workflow_dispatch:
+  workflow_dispatch:      # можно запустить вручную
   schedule:
-    - cron: "*/10 * * * *"  # запуск каждые 10 минут
+    - cron: "*/10 * * * *"   # каждые 10 минут
 
 permissions:
   contents: write
@@ -12,7 +13,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -20,14 +22,15 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"  # не качаем Chromium
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          python -m playwright install-deps || true
 
       - name: Run scraper
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          TARGET_URL: ${{ secrets.TARGET_URL }}
+          TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
+          TARGET_URL:         ${{ secrets.TARGET_URL }}
         run: python scraper.py
