@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
-      - name: Checkout (force main, clean)
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           ref: main
@@ -25,14 +25,10 @@ jobs:
           python-version: "3.11"
           check-latest: true
 
-      - name: Ensure correct requirements
-        run: |
-          python -V
-          pip -V
-          cat requirements.txt
-
+      # Никаких апгрейдов pip! Сразу ставим зависимости
       - name: Install dependencies
         run: |
+          pip --version
           pip install -r requirements.txt
 
       - name: Run scraper
@@ -40,7 +36,7 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
           TARGET_URL:         ${{ secrets.TARGET_URL }}
-        run: python scraper_playwright.py
+        run: python scraper_wright.py
 
       - name: Commit seen.json if changed
         run: |
