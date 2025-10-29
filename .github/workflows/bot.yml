@@ -25,7 +25,6 @@ jobs:
           python-version: "3.11"
           check-latest: true
 
-      # Никаких апгрейдов pip! Сразу ставим зависимости
       - name: Install dependencies
         run: |
           pip --version
@@ -36,7 +35,7 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
           TARGET_URL:         ${{ secrets.TARGET_URL }}
-        run: python scraper_wright.py
+        run: python scraper_playwright.py
 
       - name: Commit seen.json if changed
         run: |
