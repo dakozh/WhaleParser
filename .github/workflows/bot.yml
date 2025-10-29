@@ -12,12 +12,39 @@ jobs:
   run:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout (force main, clean)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          clean: true
+
+      - name: Debug repo state
+        run: |
+          echo "PWD=$(pwd)"
+          echo "=== git HEAD ==="
+          git rev-parse HEAD
+          echo "=== last commit ==="
+          git --no-pager log -1 --oneline
+          echo "=== tree ==="
+          ls -la
+          echo "=== requirements.txt content ==="
+          cat requirements.txt || true
+          echo "=== bot.yml path ==="
+          cat .github/workflows/bot.yml || true
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
+      # страхуемся: если вдруг Actions выкачал старый коммит —
+      # принудительно перезапишем requirements.txt перед установкой
+      - name: Ensure correct requirements
+        run: |
+          printf "requests==2.32.4\nbeautifulsoup4==4.12.3\nlxml==5.3.0\n" > requirements.txt
+          echo "Final requirements.txt:"
+          cat requirements.txt
 
       - name: Install dependencies
         run: |
