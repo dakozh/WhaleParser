@@ -3,14 +3,14 @@ name: hypurr-bot
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/10 * * * *"   # каждые 10 минут (UTC)
+    - cron: "*/10 * * * *"
 
 permissions:
   contents: write
 
 jobs:
   run:
-    runs-on: ubuntu-24.04   # <-- вот ключевая замена
+    runs-on: ubuntu-24.04   # ОБЯЗАТЕЛЬНО 24.04
 
     steps:
       - name: Checkout
@@ -19,17 +19,23 @@ jobs:
           ref: main
           clean: true
 
+      # Покажем реальную ОС/GLIBC в логах
+      - name: Show OS info
+        run: |
+          uname -a
+          cat /etc/os-release || true
+          ldd --version || true
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11.13"   # можно 3.10.14, но 3.11.13 ОК на 24.04
+          python-version: "3.11.13"
           cache: "pip"
 
-      - name: Debug versions
+      - name: Debug Python
         run: |
           python --version
           which python
-          ldd --version
 
       - name: Install dependencies
         run: |
