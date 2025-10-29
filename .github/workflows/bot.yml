@@ -10,32 +10,42 @@ permissions:
 
 jobs:
   run:
-    runs-on: ubuntu-latest
-    container: mcr.microsoft.com/playwright:v1.47.0-jammy   # браузеры уже установлены
+    runs-on: ubuntu-24.04
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout (force main, clean)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          clean: true
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          check-latest: true
+
+      - name: Ensure correct requirements
+        run: |
+          python -V
+          pip -V
+          cat requirements.txt
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install playwright==1.47.0 requests==2.32.4 beautifulsoup4==4.12.3 lxml==5.3.0
+          pip install -r requirements.txt
 
       - name: Run scraper
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}   # у тебя: -1003233502205
+          TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
           TARGET_URL:         ${{ secrets.TARGET_URL }}
         run: python scraper_playwright.py
 
       - name: Commit seen.json if changed
         run: |
           if [ -n "$(git status --porcelain)" ]; then
-            git config user.name "github-actions[bot]"
+            git config user.name  "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add seen.json
             git commit -m "update seen.json"
