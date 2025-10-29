@@ -45,9 +45,12 @@ jobs:
       - name: Run scraper
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
-          TARGET_URL:         ${{ secrets.TARGET_URL }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TARGET_URL: ${{ secrets.TARGET_URL }}   # https://hypurrscan.io/address/0xc2a30212a8ddac9e123944d6e29faddce994e5f2
+          METHOD_KEYWORD: "order"                     # под ваш столбец Method
+          MAX_SEND: "10"
         run: python scraper.py
+
 
       - name: Commit seen.json if changed
         run: |
