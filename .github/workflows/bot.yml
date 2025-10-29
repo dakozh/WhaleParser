@@ -1,7 +1,7 @@
 name: hypurr-bot
 
 on:
-  workflow_dispatch:      # можно запустить вручную
+  workflow_dispatch:      # ручной запуск
   schedule:
     - cron: "*/10 * * * *"   # каждые 10 минут
 
@@ -21,16 +21,25 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install dependencies
+      # Устанавливаем только зависимости Python, без Chromium
+      - name: Install Python dependencies
         env:
-          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"  # не качаем Chromium
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"  # запрещаем скачивать браузеры
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install playwright==1.47.0 requests==2.32.4
+          python -m playwright install-deps chromium
+
+      # Подготавливаем Chromium, если он уже есть на runner-е (он предустановлен)
+      - name: Prepare Chromium (use system version)
+        run: |
+          echo "Using system Chromium instead of downloading..."
+          which chromium-browser || which chromium || echo "System Chromium found"
 
       - name: Run scraper
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
           TARGET_URL:         ${{ secrets.TARGET_URL }}
-        run: python scraper.py
+        run: |
+          python scraper.py
