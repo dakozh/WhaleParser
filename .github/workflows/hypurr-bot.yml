@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   run:
-    runs-on: ubuntu-24.04   # ОБЯЗАТЕЛЬНО 24.04
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout
@@ -19,7 +19,6 @@ jobs:
           ref: main
           clean: true
 
-      # Покажем реальную ОС/GLIBC в логах
       - name: Show OS info
         run: |
           uname -a
@@ -37,6 +36,20 @@ jobs:
           python --version
           which python
 
+      # ПИНГ В ТГ ТОЛЬКО при ручном запуске (workflow_dispatch),
+      # чтобы не спамить каждый 10 минут
+      - name: Telegram smoke ping (manual runs only)
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          curl -sS "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            -d chat_id="$TELEGRAM_CHAT_ID" \
+            -d text="✅ hypurr-bot started (manual ping)" \
+            -d disable_web_page_preview=true \
+            -d parse_mode=HTML || true
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -47,7 +60,20 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
           TARGET_URL:         ${{ secrets.TARGET_URL }}
+          # опционально (можешь задать в Secrets/Variables при желании):
+          # METHOD_KEYWORD: "open"
+          # MAX_SEND: "10"
         run: python scraper.py
+
+      # Если парсинг вернул 0 строк, мы сохраняем page.html — поднимем в артефакты
+      - name: Upload page.html (debug)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-page
+          path: page.html
+          if-no-files-found: ignore
+          retention-days: 1
 
       - name: Commit seen.json if changed
         run: |
