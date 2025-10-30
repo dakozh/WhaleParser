@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   run:
-    runs-on: ubuntu-24.04   # ОБЯЗАТЕЛЬНО 24.04
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout
@@ -19,38 +19,37 @@ jobs:
           ref: main
           clean: true
 
-      # Покажем реальную ОС/GLIBC в логах
-      - name: Show OS info
-        run: |
-          uname -a
-          cat /etc/os-release || true
-          ldd --version || true
-
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11.13"
           cache: "pip"
 
-      - name: Debug Python
-        run: |
-          python --version
-          which python
-
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
+          python -m playwright install --with-deps chromium
 
       - name: Run scraper
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          TARGET_URL: ${{ secrets.TARGET_URL }}   # https://hypurrscan.io/address/0xc2a30212a8ddac9e123944d6e29faddce994e5f2
-          METHOD_KEYWORD: "order"                     # под ваш столбец Method
-          MAX_SEND: "10"
+          TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
+          TARGET_URL:         ${{ secrets.TARGET_URL }}
+          METHOD_KEYWORD:     "order"   # под колонку Method
+          MAX_SEND:           "10"
         run: python scraper.py
 
+      - name: Upload debug artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug
+          path: |
+            page.html
+            page.png
+          if-no-files-found: ignore
+          retention-days: 1
 
       - name: Commit seen.json if changed
         run: |
