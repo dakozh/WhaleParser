@@ -19,17 +19,43 @@ jobs:
           ref: main
           clean: true
 
+      - name: Show repo state (debug)
+        run: |
+          echo "=== BRANCH & SHA ==="
+          git rev-parse --abbrev-ref HEAD
+          git rev-parse HEAD
+          echo "=== WORKFLOWS ==="
+          ls -la .github/workflows
+          echo "=== requirements.txt ==="
+          sed -n '1,120p' requirements.txt || true
+          echo "=== hypurr-bot.yml (this file) ==="
+          sed -n '1,200p' .github/workflows/hypurr-bot.yml || true
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11.13"
           cache: "pip"
 
-      - name: Install dependencies
+      - name: Install dependencies (+ Playwright Chromium)
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt
-          python -m playwright install --with-deps chromium   # ⬅️ ОБЯЗАТЕЛЬНО
+          python -m pip install -r requirements.txt || true
+          # На случай, если в requirements нет playwright:
+          python -m pip install playwright==1.48.0
+          # Устанавливаем браузер и системные зависимости:
+          python -m playwright install --with-deps chromium
+
+      - name: Verify Playwright
+        run: |
+          python - <<'PY'
+          import sys
+          import importlib.metadata as md
+          from playwright.sync_api import sync_playwright
+          print("playwright version:", md.version("playwright"))
+          with sync_playwright() as p:
+              print("browsers:", "chromium" if p.chromium else "none")
+          PY
 
       - name: Run scraper
         env:
@@ -50,3 +76,13 @@ jobs:
             page.png
           if-no-files-found: ignore
           retention-days: 1
+
+      - name: Commit seen.json if changed
+        run: |
+          if ! git diff --quiet --exit-code -- seen.json; then
+            git config user.name  "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add seen.json
+            git commit -m "update seen.json"
+            git push
+          fi
