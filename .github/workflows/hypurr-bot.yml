@@ -29,17 +29,18 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
-          python -m playwright install --with-deps chromium
+          python -m playwright install --with-deps chromium   # <-- ОБЯЗАТЕЛЬНО
 
       - name: Run scraper
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
-          TARGET_URL:         ${{ secrets.TARGET_URL }}
-          METHOD_KEYWORD:     "order"   # под колонку Method
-          MAX_SEND:           "10"
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TARGET_URL: ${{ secrets.TARGET_URL }}
+          METHOD_KEYWORD: "order"        # под колонку Method
+          MAX_SEND: "10"
         run: python scraper.py
 
+      # (рекомендую для дебага)
       - name: Upload debug artifacts
         if: always()
         uses: actions/upload-artifact@v4
