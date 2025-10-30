@@ -29,18 +29,17 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
-          python -m playwright install --with-deps chromium   # <-- ОБЯЗАТЕЛЬНО
+          python -m playwright install --with-deps chromium   # ⬅️ ОБЯЗАТЕЛЬНО
 
       - name: Run scraper
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          TARGET_URL: ${{ secrets.TARGET_URL }}
-          METHOD_KEYWORD: "order"        # под колонку Method
-          MAX_SEND: "10"
+          TELEGRAM_CHAT_ID:   ${{ secrets.TELEGRAM_CHAT_ID }}
+          TARGET_URL:         ${{ secrets.TARGET_URL }}
+          METHOD_KEYWORD:     "order"
+          MAX_SEND:           "10"
         run: python scraper.py
 
-      # (рекомендую для дебага)
       - name: Upload debug artifacts
         if: always()
         uses: actions/upload-artifact@v4
@@ -51,13 +50,3 @@ jobs:
             page.png
           if-no-files-found: ignore
           retention-days: 1
-
-      - name: Commit seen.json if changed
-        run: |
-          if ! git diff --quiet --exit-code -- seen.json; then
-            git config user.name  "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add seen.json
-            git commit -m "update seen.json"
-            git push
-          fi
